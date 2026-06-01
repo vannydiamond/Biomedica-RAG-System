@@ -1,0 +1,243 @@
+# RESEARCH PROJECT PROPOSAL
+
+**Domain-Specific Medical Chatbot Using Retrieval-Augmented Generation (RAG)**
+
+A Comprehensive Engineering and Research Proposal
+
+Prepared by:
+Folashade Ogunajo  |  Utseoritselaju Vanessa Ogoru
+University of Aveiro, Portugal
+
+Submitted to:
+ACM Student Project Conference, 2026
+
+May 2026
+
+[![Python](https://img.shields.io/badge/Python-3.10-blue)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-App-orange)](https://streamlit.io/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-API-blueviolet)](https://platform.openai.com/)
+[![Cohere](https://img.shields.io/badge/Cohere-API-purple)](https://dashboard.cohere.com/api-keys)
+[![HuggingFace](https://img.shields.io/badge/HuggingFace-API-yellowgreen)](https://huggingface.co/settings/tokens)
+[![Status](https://img.shields.io/badge/Status-Production-green)]()
+
+---
+
+## 🌟 Project Overview
+
+**Document Assistant-RAG + LLM** is an advanced **Retrieval-Augmented Generation (RAG)** system that allows you to **upload PDFs/DOCX documents and interact with them conversationally** using modern LLMs.
+
+It goes beyond basic RAG systems with:
+
+- 🔌 **Multi-LLM Providers:** OpenAI, Cohere, Hugging Face  
+- ⚡ **Real-time streaming responses** (ChatGPT-like UX)  
+- 🎛 **Dynamic model selection** per API key  
+- 🧠 **Semantic retrieval** using FAISS vector database  
+- 💬 **Interactive chat interface** powered by Streamlit  
+- 🌐 Optional **FastAPI backend** for programmatic API access  
+
+---
+
+## 🌐 Live Demo
+
+[**Try it live here**](https://rag-portfolio-zeta.vercel.app/)  
+
+---
+
+## ⚠️ Prerequisites
+
+You need **valid API keys** for LLM providers:
+
+| Provider | Link |
+|----------|------|
+| OpenAI | [API Keys](https://platform.openai.com/api-keys) |
+| Cohere | [API Keys](https://dashboard.cohere.com/api-keys) |
+| Hugging Face | [Access Tokens](https://huggingface.co/settings/tokens) |
+
+> ⚠️ The app won’t function without at least one valid API key.
+
+---
+
+## 🚀 Features
+
+### 🧠 Core AI Features
+
+- Upload **PDF/DOCX** documents  
+- Automatic **text extraction & chunking**  
+- Embeddings generation (`all-MiniLM-L6-v2`)  
+- Semantic search via **FAISS vector database**  
+- Context-aware **Q&A with RAG**
+
+### 🤖 Multi-LLM Support
+
+- OpenAI, Cohere, Hugging Face  
+- Dynamic **top-5 relevant models discovery**  
+- Real-time **token streaming**  
+- Provider badges & dynamic model indicators  
+
+### 💬 User Experience
+
+- Chat-style interface (ChatGPT-like)  
+- Streaming responses with cursor effect  
+- Source document references  
+- Persistent vector index (no reprocessing needed)  
+
+---
+
+## 🏗 Architecture
+
+```mermaid
+graph TD;
+    User --> UI[Streamlit Dashboard]
+    UI --> QASystem
+    QASystem --> Retriever[FAISS Retriever]
+    Retriever --> RelevantChunks[Relevant Document Chunks]
+    RelevantChunks --> LLM[LLM (OpenAI/Cohere/HF)]
+    LLM --> Streaming[Streaming Response]
+    Streaming --> UI
+````
+
+**Workflow:** Upload documents → Chunk & embed → Query → Retrieve → Stream response.
+
+---
+
+## 📸 Screenshots / Assets
+
+> Place images in `/assets/` folder for GitHub rendering
+
+| Homepage          | Model Selection              | Upload              |
+| ----------------- | ---------------------------- | ------------------- |
+| `assets/home.png` | `assets/model-selection.png` | `assets/upload.png` |
+
+| Chat Interface           | Sources              | Streaming Comparison              |
+| ------------------------ | -------------------- | --------------------------------- |
+| `assets/chat-stream.png` | `assets/sources.png` | `assets/streaming-comparison.png` |
+
+---
+
+## ⚙️ Installation
+
+```bash
+# Clone repo
+git clone https://github.com/emekaphilian/rag-doc-assistant.git
+cd rag-doc-assistant
+
+# Create virtual environment
+python -m venv .venv
+# Activate
+# Windows
+.venv\Scripts\activate
+# macOS/Linux
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create .env with your API keys
+touch .env
+# Example:
+# OPENAI_API_KEY=your_key
+# COHERE_API_KEY=your_key
+# HF_API_TOKEN=your_token
+
+# Run Streamlit dashboard
+streamlit run dashboard/app.py
+```
+
+Optional **FastAPI backend**:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Endpoints:
+
+* `POST /upload`
+* `GET /ask?q=...`
+
+---
+
+## 💾 Persisting FAISS Index
+
+```python
+# Save
+vectorstore.save_local("vectorstore_index")
+
+# Load
+FAISS.load_local("vectorstore_index", embeddings)
+```
+
+---
+
+## 🔄 Application Flow
+
+1. Enter API key → select provider
+2. Fetch top 5 relevant models dynamically
+3. Initialize selected LLM
+4. Upload PDF/DOCX
+5. Chunk, embed, store in FAISS
+6. Ask questions → retrieve relevant chunks
+7. Stream real-time response from LLM
+
+---
+
+## ⚡ Streaming UX
+
+* **Before:** Wait → Full response → Display
+* **Now:** Real-time token streaming (OpenAI, Cohere, HF fallback)
+* ✅ Improves UX dramatically
+
+---
+
+## 🛠️ Folder Structure
+
+```
+rag-doc-assistant/
+├─ app/                 # Core logic + LLM abstraction
+├─ dashboard/           # Streamlit frontend
+├─ vectorstore_index/   # Saved FAISS index
+├─ assets/              # Images/screenshots
+├─ .env                 # API keys
+├─ requirements.txt
+└─ README.md
+```
+
+---
+
+## 💡 Breakthroughs & Lessons
+
+* Real **token streaming** UX
+* Multi-provider **LLM abstraction layer**
+* Dynamic **model discovery & selection**
+* Handling **FAISS vector DB persistence**
+* Production-ready **Streamlit + API integration**
+
+---
+
+## 🔮 Future Improvements
+
+* Conversational memory (multi-turn chat)
+* Multi-document support
+* Token usage tracking & analytics dashboard
+* Authentication / deployment on cloud (Streamlit Cloud / Vercel / Docker)
+* Advanced filtering, re-ranking, multilingual support
+
+---
+
+## 📜 License
+
+MIT License © Emeka Philian Ogbonna
+
+---
+
+## 👤 Author
+
+**Emeka Philian Ogbonna**
+AI/ML Engineer | Building intelligent AI systems with LLMs, RAG & modern AI tools
+
+GitHub: [https://github.com/emekaphilian/rag-doc-assistant](https://github.com/emekaphilian/rag-doc-assistant)
+
+---
+
+⭐ If you found this project useful, give it a star on GitHub!
+
+```
