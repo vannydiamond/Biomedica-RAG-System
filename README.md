@@ -220,7 +220,7 @@ Open `http://localhost:8501` in your browser.
 
 ### First-time setup in the app
 
-1. Select **Cohere** as provider, choose **command-r-plus**
+1. Select **Cohere** as provider, choose **command-nightly**
 2. Paste your Cohere API key → click **Initialise LLM**
 3. Upload a PDF (e.g. a clinical guideline or MedQuAD export)
 4. Click **Index file(s)**
@@ -286,7 +286,7 @@ retrieval:
 
 generation:
   provider: cohere
-  model: command-r-plus
+  model: command-nightly
   temperature: 0.3
   max_tokens: 1024
 
@@ -413,12 +413,12 @@ MedQuAD provides structured biomedical QA pairs from authoritative NIH sources (
 If you use this system or reference it in academic work, please cite:
 
 ```bibtex
-@misc{ogbonna2025biomedrag,
-  title   = {Biomedical Retrieval-Augmented Generation System for Medical Question Answering},
-  author  = {Ogbonna, Emeka Philian},
-  year    = {2025},
-  url     = {https://github.com/emekaphilian/Biomedical-RAG},
-  note    = {MSc Research Project, University of Aveiro}
+@misc{ogoru2026biomedica_rag,
+  title   = {Domain-Specific Medical Chatbot Using Retrieval-Augmented Generation (RAG)},
+  author  = {Ogoru, Utseoritselaju Vanessa},
+  year    = {2026},
+  url     = {https://github.com/vannydiamond/Biomedica-RAG-System},
+  note    = {Research project proposal, University of Aveiro}
 }
 ```
 
@@ -426,9 +426,10 @@ If you use this system or reference it in academic work, please cite:
 
 ## Author
 
-**Emeka Philian Ogbonna** — ML/AI Engineer  
-📍 Abuja, Nigeria · Remote  
-🔗 [linkedin.com/in/emekaogbonna](https://linkedin.com/in/emekaogbonna) · 💻 [github.com/emekaphilian](https://github.com/emekaphilian)
+**Utseoritselaju Vanessa Ogoru** — Researcher / Engineer  
+📍 University of Aveiro, Portugal  
+✉️ vanessa.ogoru@ua.pt  
+💻 [github.com/vannydiamond](https://github.com/vannydiamond/Biomedica-RAG-System)
 
 ---
 

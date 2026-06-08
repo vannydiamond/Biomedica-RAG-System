@@ -20,6 +20,7 @@ build/
 .env
 .env.local
 .env.*.local
+.streamlit/secrets.toml
 
 # Jupyter
 .ipynb_checkpoints/

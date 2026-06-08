@@ -9,7 +9,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import streamlit as st
 import time
-from typing import List, Optional
 
 # ── Page config (must be first) ──────────────────────────────────────────────
 st.set_page_config(
@@ -66,10 +65,8 @@ html, body, [class*="css"] {
     font-size: 0.82em;
 }
 
-/* Divider */
 hr { border-color: var(--border) !important; }
 
-/* Buttons */
 .stButton > button {
     background: transparent;
     border: 1px solid var(--border);
@@ -85,8 +82,6 @@ hr { border-color: var(--border) !important; }
     color: var(--accent);
     background: rgba(0,201,167,0.06);
 }
-
-/* Primary button */
 .stButton > button[kind="primary"] {
     background: var(--accent);
     border-color: var(--accent);
@@ -98,7 +93,6 @@ hr { border-color: var(--border) !important; }
     color: #000;
 }
 
-/* Inputs */
 .stTextInput input, .stTextArea textarea {
     background: var(--bg3) !important;
     border: 1px solid var(--border) !important;
@@ -111,7 +105,6 @@ hr { border-color: var(--border) !important; }
     box-shadow: 0 0 0 1px var(--accent) !important;
 }
 
-/* Selectbox */
 .stSelectbox > div > div {
     background: var(--bg3) !important;
     border: 1px solid var(--border) !important;
@@ -119,7 +112,6 @@ hr { border-color: var(--border) !important; }
     border-radius: 6px !important;
 }
 
-/* Chat bubbles */
 .user-msg {
     background: var(--bg3);
     border: 1px solid var(--border);
@@ -173,7 +165,6 @@ hr { border-color: var(--border) !important; }
     font-family: var(--mono);
 }
 
-/* Source cards */
 .src-card {
     background: var(--bg3);
     border: 1px solid var(--border);
@@ -187,7 +178,6 @@ hr { border-color: var(--border) !important; }
 .src-card strong { color: var(--accent2); font-family: var(--mono); }
 .src-excerpt { color: #94A3B8; font-style: italic; margin-top: 4px; }
 
-/* Status pills */
 .pill {
     display: inline-block;
     padding: 2px 10px;
@@ -202,7 +192,6 @@ hr { border-color: var(--border) !important; }
 .pill-amber  { background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.3); }
 .pill-blue   { background: rgba(59,130,246,0.12); color: #93C5FD; border: 1px solid rgba(59,130,246,0.3); }
 
-/* Metric cards */
 .m-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0; }
 .m-card {
     background: var(--bg3);
@@ -214,7 +203,6 @@ hr { border-color: var(--border) !important; }
 .m-val { font-family: var(--mono); font-size: 1.5em; font-weight: 500; color: var(--accent); }
 .m-lbl { font-size: 0.72em; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
 
-/* Header band */
 .hdr-band {
     background: linear-gradient(90deg, rgba(0,201,167,0.08), rgba(59,130,246,0.05), transparent);
     border: 1px solid rgba(0,201,167,0.15);
@@ -237,7 +225,6 @@ hr { border-color: var(--border) !important; }
 }
 .accent-dot { color: var(--accent); }
 
-/* Safety disclaimer */
 .disclaimer {
     background: rgba(245,158,11,0.07);
     border: 1px solid rgba(245,158,11,0.25);
@@ -249,7 +236,6 @@ hr { border-color: var(--border) !important; }
     margin: 8px 0;
 }
 
-/* Phase badge */
 .phase-badge {
     display: inline-flex;
     align-items: center;
@@ -263,29 +249,17 @@ hr { border-color: var(--border) !important; }
     color: #93C5FD;
 }
 
-/* Progress bars */
 .prog-wrap { margin: 6px 0; }
 .prog-label { display: flex; justify-content: space-between; font-size: 0.78em; color: var(--muted); margin-bottom: 4px; }
 .prog-track { height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
 .prog-fill  { height: 100%; border-radius: 3px; transition: width 0.5s; }
 
-/* Radio */
 .stRadio > div { gap: 4px !important; }
 .stRadio label { color: var(--text) !important; font-size: 0.88em !important; }
 
-/* File uploader */
-[data-testid="stFileUploader"] {
-    background: var(--bg3);
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    padding: 8px;
-}
-
-/* Slider */
 .stSlider > div > div > div { background: var(--border) !important; }
 .stSlider [data-testid="stThumbValue"] { color: var(--accent) !important; }
 
-/* Expander */
 .streamlit-expanderHeader {
     background: var(--bg3) !important;
     border: 1px solid var(--border) !important;
@@ -295,7 +269,6 @@ hr { border-color: var(--border) !important; }
     font-size: 0.82em !important;
 }
 
-/* Chat input */
 .stChatInput textarea {
     background: var(--bg2) !important;
     border: 1px solid var(--border) !important;
@@ -306,23 +279,20 @@ hr { border-color: var(--border) !important; }
     border-color: var(--accent) !important;
 }
 
-/* Empty state */
 .empty-state {
     text-align: center;
     padding: 50px 30px;
     color: var(--muted);
 }
-.empty-icon { font-size: 3.5em; margin-bottom: 16px; }
+.empty-icon  { font-size: 3.5em; margin-bottom: 16px; }
 .empty-title { font-family: var(--mono); font-size: 0.95em; color: #94A3B8; margin-bottom: 8px; }
-.empty-hint { font-size: 0.82em; line-height: 1.7; }
+.empty-hint  { font-size: 0.82em; line-height: 1.7; }
 
-/* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg2); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-/* Info/warning overrides */
 .stAlert { border-radius: 8px !important; }
 </style>
 """, unsafe_allow_html=True)
@@ -332,15 +302,14 @@ hr { border-color: var(--border) !important; }
 def _init():
     defaults = {
         "rag_service":      None,
-        "chat_history":     [],   # clean LLM format
-        "display_history":  [],   # {role, content, sources, latency_ms}
-        "docs_indexed":     [],
+        "chat_history":     [],
+        "display_history":  [],
         "llm_ready":        False,
         "provider":         "cohere",
-        "model":            "command-r-plus",
+        "model":            "command-nightly",
+        "api_key_val":      "",
         "top_k":            5,
         "retrieval_mode":   "hybrid",
-        "query_class":      "factoid",
         "settings_open":    False,
         "total_queries":    0,
         "avg_latency_ms":   0.0,
@@ -351,13 +320,21 @@ def _init():
 
 _init()
 
+if st.session_state.rag_service is not None and not hasattr(st.session_state.rag_service, "query_stream"):
+    st.session_state.rag_service = None
+    st.session_state.llm_ready = False
 
-# ── Lazy import of RAG service ────────────────────────────────────────────────
+
+# ── Lazy service loader ───────────────────────────────────────────────────────
 @st.cache_resource(show_spinner="Initialising biomedical embedding model…")
 def _load_service(provider: str, model: str, api_key: str):
     try:
-        from app.services import RAGService
-        svc = RAGService(provider=provider, model=model, api_key=api_key)
+        import importlib, sys
+        if "app.services" in sys.modules:
+            importlib.reload(sys.modules["app.services"])
+        from app.services import QASystem
+        svc = QASystem()
+        svc.set_llm(provider=provider, api_key=api_key, model=model)
         return svc, None
     except Exception as e:
         return None, str(e)
@@ -373,14 +350,14 @@ with st.sidebar:
     st.markdown("### 🤖 LLM Provider")
 
     provider_map = {
-        "cohere":       "Cohere (Command-R)",
-        "openai":       "OpenAI (GPT-4)",
-        "huggingface":  "Hugging Face",
+        "cohere":      "Cohere (Command-R)",
+        "openai":      "OpenAI (GPT-4)",
+        "huggingface": "Hugging Face",
     }
     model_map = {
-        "cohere":       ["command-r-plus", "command-r", "command-nightly"],
-        "openai":       ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"],
-        "huggingface":  ["microsoft/DialoGPT-medium", "google/flan-t5-large", "gpt2"],
+        "cohere":      ["command-nightly", "command-r"],
+        "openai":      ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"],
+        "huggingface": ["microsoft/DialoGPT-medium", "google/flan-t5-large", "gpt2"],
     }
 
     prov_labels = list(provider_map.values())
@@ -397,26 +374,38 @@ with st.sidebar:
     cur_idx = models.index(st.session_state.model) if st.session_state.model in models else 0
     st.session_state.model = st.selectbox("Model", models, index=cur_idx)
 
-    # API key
-    secret_key = f"{st.session_state.provider}_api_key"
+    # API key — try secrets then env
+    secret_key  = f"{st.session_state.provider}_api_key"
     api_key_val = ""
-    if hasattr(st, "secrets"):
-        api_key_val = st.secrets.get(secret_key, "")
+    try:
+        api_key_val = st.secrets.get(secret_key, "") or st.secrets.get(secret_key.upper(), "")
+    except Exception:
+        pass
+    if not api_key_val:
+        api_key_val = os.getenv(secret_key, "") or os.getenv(secret_key.upper(), "")
 
     if api_key_val:
         st.markdown('<span class="pill pill-green">✓ API key loaded from secrets</span>', unsafe_allow_html=True)
+        st.session_state.api_key_val = api_key_val
     else:
         api_key_val = st.text_input(
             "API Key",
             type="password",
             placeholder=f"Enter your {sel_prov} API key",
+            value=st.session_state.api_key_val,
+            key="api_key_input",
         )
+        st.session_state.api_key_val = api_key_val
 
     if st.button("⚡ Initialise LLM", use_container_width=True):
         if not api_key_val:
             st.error("API key required.")
         else:
             with st.spinner("Connecting…"):
+                try:
+                    _load_service.clear()
+                except Exception:
+                    pass
                 svc, err = _load_service(
                     st.session_state.provider,
                     st.session_state.model,
@@ -427,51 +416,28 @@ with st.sidebar:
             else:
                 st.session_state.rag_service = svc
                 st.session_state.llm_ready   = True
-                st.success("LLM ready!")
+                st.success("LLM ready — corpus loaded!")
 
     st.divider()
 
-    # ── Document Upload ────────────────────────────────────────────────────
-    st.markdown("### 📄 Knowledge Base")
-
-    uploaded = st.file_uploader(
-        "Upload biomedical documents",
-        type=["pdf", "docx", "txt"],
-        accept_multiple_files=True,
-        help="MedQuAD exports, clinical guidelines, research papers, textbooks",
-    )
-
-    if uploaded:
-        new_files = [f for f in uploaded if f.name not in st.session_state.docs_indexed]
-        if new_files:
-            if st.button(f"📥 Index {len(new_files)} file(s)", use_container_width=True):
-                svc = st.session_state.rag_service
-                if not svc:
-                    st.warning("Initialise the LLM first.")
-                else:
-                    bar = st.progress(0)
-                    total_chunks = 0
-                    for i, f in enumerate(new_files):
-                        with st.spinner(f"Processing {f.name}…"):
-                            try:
-                                n = svc.ingest(f.read(), f.name)
-                                total_chunks += n
-                                st.session_state.docs_indexed.append(f.name)
-                            except Exception as e:
-                                st.error(f"{f.name}: {e}")
-                        bar.progress((i + 1) / len(new_files))
-                    bar.empty()
-                    st.success(f"Indexed {total_chunks:,} chunks from {len(new_files)} file(s)")
-        else:
-            st.info("All files already indexed.")
-
-    if st.session_state.docs_indexed:
-        for fn in st.session_state.docs_indexed:
-            st.markdown(f"<div style='font-size:0.8em;color:#64748b;padding:2px 0'>📄 {fn}</div>", unsafe_allow_html=True)
+    # ── Corpus info (replaces upload section) ─────────────────────────────
+    st.markdown("### 📚 Knowledge Base")
+    st.markdown("""
+    <div style="font-size:0.82em;color:#64748b;line-height:1.8">
+        Corpus is pre-loaded at startup.<br><br>
+        <strong style="color:#94A3B8">MedQuAD</strong><br>
+        32,814 QA pairs · 16 NLM sources<br><br>
+        <strong style="color:#94A3B8">Embeddings</strong><br>
+        all-MiniLM-L6-v2 · FAISS IndexFlatIP<br><br>
+        <strong style="color:#94A3B8">Topics covered</strong><br>
+        Diseases · Drugs · Treatments<br>
+        Genetics · Clinical trials · FAQs
+    </div>
+    """, unsafe_allow_html=True)
 
     st.divider()
 
-    # ── Retrieval Settings toggle ──────────────────────────────────────────
+    # ── Retrieval settings ─────────────────────────────────────────────────
     chevron = "▲" if st.session_state.settings_open else "▼"
     if st.button(f"⚙️ Retrieval Settings  {chevron}", use_container_width=True, key="settings_btn"):
         st.session_state.settings_open = not st.session_state.settings_open
@@ -480,16 +446,16 @@ with st.sidebar:
     if st.session_state.settings_open:
         st.session_state.top_k = st.slider(
             "Top-K chunks", min_value=3, max_value=15, value=st.session_state.top_k,
-            help="Number of chunks retrieved before reranking"
+            help="Number of chunks retrieved before reranking",
         )
         st.session_state.retrieval_mode = st.radio(
             "Retrieval mode",
             ["hybrid", "dense", "sparse"],
             index=["hybrid", "dense", "sparse"].index(st.session_state.retrieval_mode),
-            help="hybrid = FAISS + BM25 + RRF fusion"
+            help="hybrid = FAISS + BM25 + RRF fusion",
         )
         st.caption(
-            f"Hybrid uses FAISS dense + BM25 sparse + Reciprocal Rank Fusion. "
+            f"Hybrid = FAISS dense + BM25 sparse + Reciprocal Rank Fusion. "
             f"Current: **{st.session_state.retrieval_mode}**, top-{st.session_state.top_k}."
         )
 
@@ -515,30 +481,27 @@ with st.sidebar:
 
 
 # ── Main layout ───────────────────────────────────────────────────────────────
-llm_ok  = st.session_state.llm_ready
-docs_ok = bool(st.session_state.docs_indexed)
-svc     = st.session_state.rag_service
+llm_ok = st.session_state.llm_ready
+svc    = st.session_state.rag_service
 
 # Header
 st.markdown(f"""
 <div class="hdr-band">
     <div class="hdr-title">
         <span class="accent-dot">●</span> Biomedical RAG
-        <span style="font-size:0.55em; color:var(--muted); margin-left:12px;">
+        <span style="font-size:0.55em;color:var(--muted);margin-left:12px;">
             Medical Question Answering System
         </span>
     </div>
     <div class="hdr-sub">
-        Grounded answers from biomedical literature using hybrid retrieval (FAISS + BM25) and Cohere Command-R. 
+        Grounded answers from biomedical literature using hybrid retrieval (FAISS + BM25) and Cohere Command-R.
         Corpus: MedQuAD · 32,814 QA pairs · SentenceTransformers embeddings.
     </div>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill {'pill-green' if llm_ok else 'pill-red'}">
             {'✓ LLM Ready' if llm_ok else '✗ LLM Not Connected'}
         </span>
-        <span class="pill {'pill-green' if docs_ok else 'pill-red'}">
-            {'✓ ' + str(len(st.session_state.docs_indexed)) + ' Doc(s) Indexed' if docs_ok else '✗ No Documents'}
-        </span>
+        <span class="pill pill-green">✓ Corpus Pre-loaded</span>
         <span class="pill pill-blue">
             {st.session_state.retrieval_mode.upper()} Retrieval
         </span>
@@ -547,7 +510,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Three-column layout ───────────────────────────────────────────────────────
+# ── Two-column layout ─────────────────────────────────────────────────────────
 chat_col, insight_col = st.columns([2.2, 1])
 
 # ── Chat column ───────────────────────────────────────────────────────────────
@@ -560,7 +523,7 @@ with chat_col:
             <div class="empty-icon">🔬</div>
             <div class="empty-title">READY FOR BIOMEDICAL QUERIES</div>
             <div class="empty-hint">
-                Upload documents and connect your LLM to begin.<br><br>
+                Connect your LLM in the sidebar, then ask any biomedical question.<br><br>
                 <strong>Example questions:</strong><br>
                 "What are the symptoms of type 2 diabetes?"<br>
                 "How does Parkinson's disease affect dopamine?"<br>
@@ -584,32 +547,28 @@ with chat_col:
                     expanded=False,
                 ):
                     for i, src in enumerate(turn["sources"], 1):
-                        score  = src.get("rerank_score") or src.get("score", 0)
-                        conf   = "High" if score > 0.7 else "Medium" if score > 0.4 else "Low"
-                        c_cls  = {"High": "pill-green", "Medium": "pill-amber", "Low": "pill-red"}[conf]
+                        score = src.get("rerank_score") or src.get("score", 0)
+                        conf  = "High" if score > 0.7 else "Medium" if score > 0.4 else "Low"
+                        c_cls = {"High": "pill-green", "Medium": "pill-amber", "Low": "pill-red"}[conf]
                         st.markdown(f"""
                         <div class="src-card">
-                            <strong>#{i}  {src.get('source','Unknown')}</strong>
+                            <strong>#{i}  {src.get('source', 'Unknown')}</strong>
                             &nbsp;<span class="pill {c_cls}">{conf}</span>
                             &nbsp;<span style="font-family:var(--mono);font-size:0.85em;color:var(--muted)">
                                 score: {score:.3f}
                             </span>
-                            <div class="src-excerpt">{src.get('text','')[:240]}…</div>
+                            <div class="src-excerpt">{src.get('text', '')[:240]}…</div>
                         </div>
                         """, unsafe_allow_html=True)
 
-    # Input
+    # Chat input — only requires LLM, no doc check
     question = st.chat_input(
         "Ask a biomedical question…",
-        disabled=not (llm_ok and docs_ok),
+        disabled=not llm_ok,
     )
 
-    if not llm_ok and not docs_ok:
-        st.caption("⬅ Connect LLM and upload documents in the sidebar to begin.")
-    elif not llm_ok:
-        st.caption("⬅ Connect your LLM in the sidebar.")
-    elif not docs_ok:
-        st.caption("⬅ Upload and index documents in the sidebar.")
+    if not llm_ok:
+        st.caption("⬅ Connect your LLM in the sidebar to begin.")
 
     if question:
         st.session_state.display_history.append({"role": "user", "content": question})
@@ -638,7 +597,6 @@ with chat_col:
                 )
             placeholder.empty()
 
-            # Update running stats
             st.session_state.total_queries += 1
             n = st.session_state.total_queries
             prev_avg = st.session_state.avg_latency_ms
@@ -665,7 +623,6 @@ with chat_col:
 with insight_col:
     st.markdown("### 📊 System Status")
 
-    # Live metrics
     n_chunks = 0
     try:
         if svc:
@@ -680,8 +637,8 @@ with insight_col:
             <div class="m-lbl">Chunks</div>
         </div>
         <div class="m-card">
-            <div class="m-val">{len(st.session_state.docs_indexed)}</div>
-            <div class="m-lbl">Docs</div>
+            <div class="m-val">32,814</div>
+            <div class="m-lbl">QA Pairs</div>
         </div>
         <div class="m-card">
             <div class="m-val">{st.session_state.total_queries}</div>
@@ -697,7 +654,7 @@ with insight_col:
     st.divider()
     st.markdown("**Pipeline**")
     st.markdown(f"""
-    <div style="font-size:0.78em; color:var(--muted); line-height:2; font-family:var(--mono)">
+    <div style="font-size:0.78em;color:var(--muted);line-height:2;font-family:var(--mono)">
         Embed  · all-MiniLM-L6-v2<br>
         Index  · FAISS (IndexFlatIP)<br>
         Sparse · BM25 (rank-bm25)<br>
@@ -709,13 +666,12 @@ with insight_col:
 
     st.divider()
 
-    # Project progress
     st.markdown("**Project Progress**")
     phases = [
-        ("Phase 1 · Data Pipeline",   95, "pill-green"),
-        ("Phase 2 · RAG System",       85, "pill-green"),
-        ("Phase 3 · Evaluation",       30, "pill-amber"),
-        ("Phase 4 · Safety & Ethics",   5, "pill-red"),
+        ("Phase 1 · Data Pipeline",  95, "pill-green"),
+        ("Phase 2 · RAG System",     85, "pill-green"),
+        ("Phase 3 · Evaluation",     30, "pill-amber"),
+        ("Phase 4 · Safety & Ethics", 5, "pill-red"),
     ]
     for label, pct, cls in phases:
         color = {"pill-green": "#10B981", "pill-amber": "#F59E0B", "pill-red": "#EF4444"}[cls]
@@ -730,11 +686,10 @@ with insight_col:
 
     st.divider()
 
-    # Last query sources
     st.markdown("**Last Query**")
     last = next(
         (t for t in reversed(st.session_state.display_history) if t["role"] == "assistant"),
-        None
+        None,
     )
     if last and last.get("sources"):
         st.caption(f"⚡ {last.get('latency_ms', 0):.0f}ms retrieval")
@@ -743,9 +698,9 @@ with insight_col:
             conf  = "🟢" if score > 0.7 else "🟡" if score > 0.4 else "🔴"
             st.markdown(f"""
             <div class="src-card">
-                <strong>#{i} {src.get('source','?')[:28]}</strong>
+                <strong>#{i} {src.get('source', '?')[:28]}</strong>
                 {conf} {score:.3f}<br>
-                <span class="src-excerpt">{src.get('text','')[:90]}…</span>
+                <span class="src-excerpt">{src.get('text', '')[:90]}…</span>
             </div>
             """, unsafe_allow_html=True)
     else:
