@@ -45,3 +45,7 @@ pytest>=7.4.0
 pytest-cov>=4.1.0
 black>=23.0.0
 flake8>=6.0.0
+
+langchain-text-splitters>=0.0.1
+huggingface-hub>=0.23.0
+langchain-huggingface>=0.1.0
