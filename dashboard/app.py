@@ -481,8 +481,13 @@ with st.sidebar:
 
 
 # ── Main layout ───────────────────────────────────────────────────────────────
+svc = st.session_state.rag_service
+
+# Keep state consistent after Streamlit reruns/restarts
+if svc is None:
+    st.session_state.llm_ready = False
+
 llm_ok = st.session_state.llm_ready
-svc    = st.session_state.rag_service
 
 # Header
 st.markdown(f"""
