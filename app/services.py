@@ -243,34 +243,34 @@ class QASystem:
         return len(docs)
 
     def _load_index(self):
-    import traceback
+        import traceback
 
-    faiss_file = os.path.join(INDEX_PATH, "index.faiss")
-    pkl_file = os.path.join(INDEX_PATH, "index.pkl")
+        faiss_file = os.path.join(INDEX_PATH, "index.faiss")
+        pkl_file = os.path.join(INDEX_PATH, "index.pkl")
 
-    print("=" * 60)
-    print("INDEX_PATH:", INDEX_PATH)
-    print("FAISS EXISTS:", os.path.exists(faiss_file))
-    print("PKL EXISTS:", os.path.exists(pkl_file))
+        print("=" * 60)
+        print("INDEX_PATH:", INDEX_PATH)
+        print("FAISS EXISTS:", os.path.exists(faiss_file))
+        print("PKL EXISTS:", os.path.exists(pkl_file))
 
-    if os.path.exists(faiss_file) and os.path.exists(pkl_file):
-        try:
-            print("LOADING FAISS...")
-            db = FAISS.load_local(
-                INDEX_PATH,
-                get_embeddings(),
-                allow_dangerous_deserialization=True,
-            )
-            print("SUCCESS")
-            return db
+        if os.path.exists(faiss_file) and os.path.exists(pkl_file):
+            try:
+                print("LOADING FAISS...")
+                db = FAISS.load_local(
+                    INDEX_PATH,
+                    get_embeddings(),
+                    allow_dangerous_deserialization=True,
+                )
+                print("SUCCESS")
+                return db
 
-        except Exception:
-            print("LOAD FAILED")
-            print(traceback.format_exc())
-            return None
+            except Exception:
+                print("LOAD FAILED")
+                print(traceback.format_exc())
+                return None
 
-    print("INDEX FILES NOT FOUND")
-    return None
+        print("INDEX FILES NOT FOUND")
+        return None
 
     def retrieve(self, query: str, k: int = 3):
         if not self.vectorstore:
