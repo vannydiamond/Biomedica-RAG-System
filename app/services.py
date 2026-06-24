@@ -4,6 +4,8 @@ import os
 from typing import List
 from dotenv import load_dotenv
 
+from app.utils import extract_text
+
 # -------------------------
 # LOAD ENVIRONMENT VARIABLES
 # -------------------------
@@ -211,6 +213,32 @@ class QASystem:
         self.vectorstore = FAISS.from_texts(docs, embeddings)
         self.vectorstore.save_local(INDEX_PATH)
 
+    def ingest(self, file_data: bytes, file_name: str) -> int:
+        """Ingest a single uploaded file into the FAISS index."""
+        text = extract_text(file_data, file_name)
+        if not text or not text.strip():
+            raise ValueError("No readable text found in uploaded file")
+
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=800,
+            chunk_overlap=100
+        )
+        docs = splitter.split_text(text)
+        if not docs:
+            return 0
+
+        embeddings = get_embeddings()
+        if self.vectorstore is None:
+            self.vectorstore = FAISS.from_texts(docs, embeddings)
+        else:
+            try:
+                self.vectorstore.add_texts(docs)
+            except Exception as e:
+                raise RuntimeError(f"Failed to add documents to FAISS index: {e}")
+
+        self.vectorstore.save_local(INDEX_PATH)
+        return len(docs)
+
     def _load_index(self):
         # Check for both FAISS index files
         faiss_file = os.path.join(INDEX_PATH, "index.faiss")
@@ -256,3 +284,55 @@ Question: {query}
 Answer:
 """
         return self.llm.invoke(prompt)
+
+    def query_stream(self, question: str, chat_history: List[dict] | None = None, top_k: int = 3, mode: str = "hybrid"):
+        """Retrieve relevant context and stream a grounded answer from the LLM.
+
+        Returns a tuple (stream_generator, sources_list).
+        """
+        if chat_history is None:
+            chat_history = []
+
+        if not self.vectorstore:
+            # No documents indexed
+            def _empty_gen():
+                yield "No documents indexed."
+            return _empty_gen(), []
+
+        docs = self.retrieve(question, k=top_k)
+
+        # Build simple sources list
+        sources = []
+        for i, d in enumerate(docs):
+            src = {}
+            if hasattr(d, "metadata") and isinstance(d.metadata, dict):
+                src["source"] = d.metadata.get("source", f"doc-{i}")
+            else:
+                # fallback for different doc shape
+                src["source"] = getattr(d, "source", f"doc-{i}") or f"doc-{i}"
+            src["text"] = (getattr(d, "page_content", None) or getattr(d, "content", ""))[:400]
+            src["score"] = float(getattr(d, "similarity_score", 0.0))
+            sources.append(src)
+
+        context = "\n\n".join([getattr(d, "page_content", None) or getattr(d, "content", "") for d in docs])
+
+        # Compose a grounding prompt
+        history_text = "\n".join([f"User: {m['content']}" if m.get("role") == "user" else f"Assistant: {m['content']}" for m in chat_history])
+
+        prompt = f"""
+Answer ONLY from the context below. Be concise and cite sources when possible.
+
+Context:
+{context}
+
+Conversation history:
+{history_text}
+
+Question: {question}
+
+Answer:
+"""
+
+        # Use the underlying LLM streaming API
+        stream_gen = self.llm.stream(prompt)
+        return stream_gen, sources
