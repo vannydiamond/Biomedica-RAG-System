@@ -22,7 +22,10 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-INDEX_PATH = "vectorstore_index"
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+INDEX_PATH = str(BASE_DIR / "vectorstore_index")
 
 
 def get_embeddings():
