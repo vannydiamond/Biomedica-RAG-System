@@ -18,6 +18,15 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+import os
+
+st.sidebar.markdown("### DEBUG")
+st.sidebar.write("cwd:", os.getcwd())
+st.sidebar.write("vectorstore_index:", os.path.exists("vectorstore_index"))
+st.sidebar.write("index.faiss:", os.path.exists("vectorstore_index/index.faiss"))
+st.sidebar.write("index.pkl:", os.path.exists("vectorstore_index/index.pkl"))
+
+
 # ── Theme & CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
