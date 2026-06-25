@@ -1,353 +1,740 @@
-# app/services.py
+"""
+dashboard/app.py  — Biomedical RAG System
+Streamlit MVP for supervisor review
+Entry point: streamlit run dashboard/app.py
+"""
+
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+import streamlit as st
+import time
+
+# ── Page config (must be first) ──────────────────────────────────────────────
+st.set_page_config(
+    page_title="BioMed RAG — Medical Q&A System",
+    page_icon="🧬",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
 import os
-from typing import List
-from dotenv import load_dotenv
 
-from app.utils import extract_text
-
-# -------------------------
-# LOAD ENVIRONMENT VARIABLES
-# -------------------------
-load_dotenv()
-
-HF_TOKEN = os.getenv("HF_API_TOKEN")
-OPENAI_KEY = os.getenv("OPENAI_API_KEY")
-COHERE_KEY = os.getenv("COHERE_API_KEY")
-
-# -------------------------
-# EMBEDDINGS & VECTOR STORE
-# -------------------------
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-from pathlib import Path
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-INDEX_PATH = str(BASE_DIR / "vectorstore_index")
+st.sidebar.markdown("### DEBUG")
+st.sidebar.write("cwd:", os.getcwd())
+st.sidebar.write("vectorstore_index:", os.path.exists("vectorstore_index"))
+st.sidebar.write("index.faiss:", os.path.exists("vectorstore_index/index.faiss"))
+st.sidebar.write("index.pkl:", os.path.exists("vectorstore_index/index.pkl"))
 
 
-def get_embeddings():
-    return HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+# ── Theme & CSS ───────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+    --bg:          #0B0F1A;
+    --bg2:         #111827;
+    --bg3:         #1A2235;
+    --border:      #1E2D45;
+    --accent:      #00C9A7;
+    --accent2:     #3B82F6;
+    --accent3:     #F59E0B;
+    --danger:      #EF4444;
+    --text:        #E2E8F0;
+    --muted:       #64748B;
+    --mono:        'IBM Plex Mono', monospace;
+    --sans:        'DM Sans', sans-serif;
+}
+
+html, body, [class*="css"] {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* Hide Streamlit chrome */
+#MainMenu, footer, header { visibility: hidden; }
+.stDeployButton { display: none; }
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background: var(--bg2) !important;
+    border-right: 1px solid var(--border);
+}
+[data-testid="stSidebar"] .stMarkdown h2 {
+    font-family: var(--mono);
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    font-size: 1.1rem;
+    margin-bottom: 2px;
+}
+[data-testid="stSidebar"] .stMarkdown p {
+    color: var(--muted);
+    font-size: 0.82em;
+}
+
+hr { border-color: var(--border) !important; }
+
+.stButton > button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 0.82em;
+    transition: all 0.2s;
+    width: 100%;
+}
+.stButton > button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,201,167,0.06);
+}
+.stButton > button[kind="primary"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 600;
+}
+.stButton > button[kind="primary"]:hover {
+    background: #00b396;
+    color: #000;
+}
+
+.stTextInput input, .stTextArea textarea {
+    background: var(--bg3) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    border-radius: 6px !important;
+    font-family: var(--sans) !important;
+}
+.stTextInput input:focus, .stTextArea textarea:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 1px var(--accent) !important;
+}
+
+.stSelectbox > div > div {
+    background: var(--bg3) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    border-radius: 6px !important;
+}
+
+.user-msg {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px 12px 2px 12px;
+    padding: 13px 16px;
+    margin: 10px 0 6px;
+    font-size: 0.95em;
+    line-height: 1.65;
+    color: var(--text);
+    position: relative;
+}
+.user-msg::before {
+    content: "YOU";
+    font-family: var(--mono);
+    font-size: 0.65em;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 5px;
+    letter-spacing: 0.1em;
+}
+.bot-msg {
+    background: linear-gradient(135deg, rgba(0,201,167,0.05), rgba(59,130,246,0.04));
+    border: 1px solid rgba(0,201,167,0.2);
+    border-left: 3px solid var(--accent);
+    border-radius: 2px 12px 12px 12px;
+    padding: 13px 18px;
+    margin: 6px 0 10px;
+    font-size: 0.95em;
+    line-height: 1.75;
+    color: var(--text);
+    position: relative;
+}
+.bot-msg::before {
+    content: "BIOMED RAG";
+    font-family: var(--mono);
+    font-size: 0.65em;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 5px;
+    letter-spacing: 0.1em;
+}
+.error-msg {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-left: 3px solid var(--danger);
+    border-radius: 2px 12px 12px 12px;
+    padding: 13px 18px;
+    margin: 6px 0 10px;
+    font-size: 0.9em;
+    color: #FCA5A5;
+    font-family: var(--mono);
+}
+
+.src-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 5px 0;
+    font-size: 0.82em;
+    color: var(--muted);
+    line-height: 1.6;
+}
+.src-card strong { color: var(--accent2); font-family: var(--mono); }
+.src-excerpt { color: #94A3B8; font-style: italic; margin-top: 4px; }
+
+.pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-family: var(--mono);
+    font-size: 0.72em;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+}
+.pill-green  { background: rgba(16,185,129,0.15); color: #34D399; border: 1px solid rgba(16,185,129,0.3); }
+.pill-red    { background: rgba(239,68,68,0.12);  color: #FCA5A5; border: 1px solid rgba(239,68,68,0.3); }
+.pill-amber  { background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.3); }
+.pill-blue   { background: rgba(59,130,246,0.12); color: #93C5FD; border: 1px solid rgba(59,130,246,0.3); }
+
+.m-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0; }
+.m-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 10px;
+    text-align: center;
+}
+.m-val { font-family: var(--mono); font-size: 1.5em; font-weight: 500; color: var(--accent); }
+.m-lbl { font-size: 0.72em; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.hdr-band {
+    background: linear-gradient(90deg, rgba(0,201,167,0.08), rgba(59,130,246,0.05), transparent);
+    border: 1px solid rgba(0,201,167,0.15);
+    border-radius: 10px;
+    padding: 20px 28px;
+    margin-bottom: 20px;
+}
+.hdr-title {
+    font-family: var(--mono);
+    font-size: 1.55em;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+}
+.hdr-sub {
+    color: var(--muted);
+    font-size: 0.88em;
+    line-height: 1.5;
+}
+.accent-dot { color: var(--accent); }
+
+.disclaimer {
+    background: rgba(245,158,11,0.07);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.8em;
+    color: #FCD34D;
+    line-height: 1.5;
+    margin: 8px 0;
+}
+
+.phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: var(--mono);
+    font-size: 0.75em;
+    color: #93C5FD;
+}
+
+.prog-wrap { margin: 6px 0; }
+.prog-label { display: flex; justify-content: space-between; font-size: 0.78em; color: var(--muted); margin-bottom: 4px; }
+.prog-track { height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.prog-fill  { height: 100%; border-radius: 3px; transition: width 0.5s; }
+
+.stRadio > div { gap: 4px !important; }
+.stRadio label { color: var(--text) !important; font-size: 0.88em !important; }
+
+.stSlider > div > div > div { background: var(--border) !important; }
+.stSlider [data-testid="stThumbValue"] { color: var(--accent) !important; }
+
+.streamlit-expanderHeader {
+    background: var(--bg3) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    color: var(--text) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.82em !important;
+}
+
+.stChatInput textarea {
+    background: var(--bg2) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    font-family: var(--sans) !important;
+}
+.stChatInput textarea:focus {
+    border-color: var(--accent) !important;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 50px 30px;
+    color: var(--muted);
+}
+.empty-icon  { font-size: 3.5em; margin-bottom: 16px; }
+.empty-title { font-family: var(--mono); font-size: 0.95em; color: #94A3B8; margin-bottom: 8px; }
+.empty-hint  { font-size: 0.82em; line-height: 1.7; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+.stAlert { border-radius: 8px !important; }
+</style>
+""", unsafe_allow_html=True)
 
 
-# -------------------------
-# BASE LLM INTERFACE
-# -------------------------
-class BaseLLM:
-    def invoke(self, prompt: str) -> str:
-        raise NotImplementedError
+# ── Session state ─────────────────────────────────────────────────────────────
+def _init():
+    defaults = {
+        "rag_service":      None,
+        "chat_history":     [],
+        "display_history":  [],
+        "llm_ready":        False,
+        "provider":         "cohere",
+        "model":            "command-nightly",
+        "api_key_val":      "",
+        "top_k":            5,
+        "retrieval_mode":   "hybrid",
+        "settings_open":    False,
+        "total_queries":    0,
+        "avg_latency_ms":   0.0,
+    }
+    for k, v in defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
 
-    def stream(self, prompt: str):
-        """Yield text chunks"""
-        raise NotImplementedError
+_init()
 
-
-# -------------------------
-# HUGGING FACE LLM
-# -------------------------
-from huggingface_hub import InferenceClient
-
-
-class HFLLM(BaseLLM):
-    def __init__(self, token: str, model_name: str, temperature: float = 0.7, max_tokens: int = 512):
-        if not token:
-            raise ValueError("Hugging Face API token required")
-
-        self.client = InferenceClient(
-            model=model_name,
-            token=token
-        )
-        self.temperature = temperature
-        self.max_tokens = max_tokens
-
-    def invoke(self, prompt: str) -> str:
-        return self.client.text_generation(
-            prompt,
-            max_new_tokens=self.max_tokens,
-            temperature=self.temperature
-        ).strip()
-
-    # ⚠️ HF Inference API does NOT support true streaming
-    def stream(self, prompt: str):
-        # Return the full response as a single chunk since HF doesn't support streaming
-        text = self.invoke(prompt)
-        yield text
+if st.session_state.rag_service is not None and not hasattr(st.session_state.rag_service, "query_stream"):
+    st.session_state.rag_service = None
+    st.session_state.llm_ready = False
 
 
-# -------------------------
-# COHERE LLM (STREAMING ✅)
-# -------------------------
-import cohere
+# ── Lazy service loader ───────────────────────────────────────────────────────
+@st.cache_resource(show_spinner="Initialising biomedical embedding model…")
+def _load_service(provider: str, model: str, api_key: str):
+    try:
+        import importlib, sys
+        if "app.services" in sys.modules:
+            importlib.reload(sys.modules["app.services"])
+        from app.services import QASystem
+        svc = QASystem()
+        svc.set_llm(provider=provider, api_key=api_key, model=model)
+        return svc, None
+    except Exception as e:
+        return None, str(e)
 
 
-class CohereLLM(BaseLLM):
-    def __init__(self, api_key: str, model: str, temperature: float = 0.7, max_tokens: int = 512):
-        self.client = cohere.Client(api_key)
-        self.model = model
-        self.temperature = temperature
-        self.max_tokens = max_tokens
+# ── Sidebar ───────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("## 🧬 BioMed RAG")
+    st.markdown("*Biomedical Q&A System — MSc Research MVP*")
+    st.divider()
 
-        # Validate
-        self.client.chat(model=self.model, message="hi", max_tokens=1)
+    # ── LLM Config ────────────────────────────────────────────────────────
+    st.markdown("### 🤖 LLM Provider")
 
-    def invoke(self, prompt: str) -> str:
-        response = self.client.chat(
-            model=self.model,
-            message=prompt,
-            max_tokens=self.max_tokens,
-            temperature=self.temperature
-        )
+    provider_map = {
+        "cohere":      "Cohere (Command-R)",
+        "openai":      "OpenAI (GPT-4)",
+        "huggingface": "Hugging Face",
+    }
+    model_map = {
+        "cohere":      ["command-nightly", "command-r"],
+        "openai":      ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"],
+        "huggingface": ["microsoft/DialoGPT-medium", "google/flan-t5-large", "gpt2"],
+    }
 
-        # Handle different response formats
-        if hasattr(response, "text") and response.text:
-            return response.text.strip()
-        elif hasattr(response, "message") and response.message:
-            if hasattr(response.message, "content") and response.message.content:
-                return response.message.content[0].text.strip() if isinstance(response.message.content, list) else str(response.message.content).strip()
-            return str(response.message).strip()
-        else:
-            return str(response).strip()
+    prov_labels = list(provider_map.values())
+    prov_keys   = list(provider_map.keys())
+    prov_idx    = prov_keys.index(st.session_state.provider)
+    sel_prov    = st.selectbox("Provider", prov_labels, index=prov_idx)
+    new_prov    = prov_keys[prov_labels.index(sel_prov)]
+    if new_prov != st.session_state.provider:
+        st.session_state.provider  = new_prov
+        st.session_state.model     = model_map[new_prov][0]
+        st.session_state.llm_ready = False
 
-    def stream(self, prompt: str):
-        stream = self.client.chat_stream(
-            model=self.model,
-            message=prompt,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens
-        )
+    models  = model_map[st.session_state.provider]
+    cur_idx = models.index(st.session_state.model) if st.session_state.model in models else 0
+    st.session_state.model = st.selectbox("Model", models, index=cur_idx)
 
-        for event in stream:
-            if event.event_type == "text-generation":
-                yield event.text
+    # API key — try secrets then env
+    secret_key  = f"{st.session_state.provider}_api_key"
+    api_key_val = ""
+    try:
+        api_key_val = st.secrets.get(secret_key, "") or st.secrets.get(secret_key.upper(), "")
+    except Exception:
+        pass
+    if not api_key_val:
+        api_key_val = os.getenv(secret_key, "") or os.getenv(secret_key.upper(), "")
 
-
-# -------------------------
-# OPENAI LLM (STREAMING ✅)
-# -------------------------
-from openai import OpenAI
-
-
-class OpenAILLM(BaseLLM):
-    def __init__(self, api_key: str, model: str, temperature: float = 0.7, max_tokens: int = 512):
-        self.client = OpenAI(api_key=api_key)
-        self.model = model
-        self.temperature = temperature
-        self.max_tokens = max_tokens
-
-    def invoke(self, prompt: str) -> str:
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=self.temperature,
-            max_tokens=self.max_tokens
-        )
-        return response.choices[0].message.content
-
-    def stream(self, prompt: str):
-        stream = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
-            stream=True
-        )
-
-        for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                yield delta
-
-
-# -------------------------
-# LLM FACTORY
-# -------------------------
-def get_llm(provider: str, api_key: str, model: str, temperature: float = 0.7, max_tokens: int = 512) -> BaseLLM:
-    provider = provider.lower()
-
-    if provider == "hf":
-        return HFLLM(api_key, model, temperature, max_tokens)
-
-    elif provider == "cohere":
-        return CohereLLM(api_key, model, temperature, max_tokens)
-
-    elif provider == "openai":
-        return OpenAILLM(api_key, model, temperature, max_tokens)
-
+    if api_key_val:
+        st.markdown('<span class="pill pill-green">✓ API key loaded from secrets</span>', unsafe_allow_html=True)
+        st.session_state.api_key_val = api_key_val
     else:
-        raise ValueError(f"Unsupported provider: {provider}")
-
-
-# -------------------------
-# QA SYSTEM (RAG CORE)
-# -------------------------
-class QASystem:
-    def __init__(self):
-        self.vectorstore = self._load_index()
-        self.llm: BaseLLM | None = None
-
-    def set_llm(self, provider: str, api_key: str, model: str, temperature: float = 0.7, max_tokens: int = 512):
-        self.llm = get_llm(
-            provider=provider,
-            api_key=api_key,
-            model=model,
-            temperature=temperature,
-            max_tokens=max_tokens
+        api_key_val = st.text_input(
+            "API Key",
+            type="password",
+            placeholder=f"Enter your {sel_prov} API key",
+            value=st.session_state.api_key_val,
+            key="api_key_input",
         )
+        st.session_state.api_key_val = api_key_val
 
-    def build_index(self, texts: List[str]):
-        """
-        Build FAISS index from multiple documents
-        """
-        if not texts:
-            raise ValueError("No texts provided")
-
-        # Combine all texts and split into chunks
-        combined_text = "\n\n".join(texts)
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=800,
-            chunk_overlap=100
-        )
-        docs = splitter.split_text(combined_text)
-
-        # Create embeddings and FAISS index
-        embeddings = get_embeddings()
-        self.vectorstore = FAISS.from_texts(docs, embeddings)
-        self.vectorstore.save_local(INDEX_PATH)
-
-    def ingest(self, file_data: bytes, file_name: str) -> int:
-        """Ingest a single uploaded file into the FAISS index."""
-        text = extract_text(file_data, file_name)
-        if not text or not text.strip():
-            raise ValueError("No readable text found in uploaded file")
-
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=800,
-            chunk_overlap=100
-        )
-        docs = splitter.split_text(text)
-        if not docs:
-            return 0
-
-        embeddings = get_embeddings()
-        if self.vectorstore is None:
-            self.vectorstore = FAISS.from_texts(docs, embeddings)
+    if st.button("⚡ Initialise LLM", use_container_width=True):
+        if not api_key_val:
+            st.error("API key required.")
         else:
-            try:
-                self.vectorstore.add_texts(docs)
-            except Exception as e:
-                raise RuntimeError(f"Failed to add documents to FAISS index: {e}")
-
-        self.vectorstore.save_local(INDEX_PATH)
-        return len(docs)
-
-    def _load_index(self):
-        import traceback
-
-        faiss_file = os.path.join(INDEX_PATH, "index.faiss")
-        pkl_file = os.path.join(INDEX_PATH, "index.pkl")
-
-        print("=" * 60)
-        print("INDEX_PATH:", INDEX_PATH)
-        print("FAISS EXISTS:", os.path.exists(faiss_file))
-        print("PKL EXISTS:", os.path.exists(pkl_file))
-
-        if os.path.exists(faiss_file) and os.path.exists(pkl_file):
-            try:
-                print("LOADING FAISS...")
-                db = FAISS.load_local(
-                    INDEX_PATH,
-                    get_embeddings(),
-                    allow_dangerous_deserialization=True,
+            with st.spinner("Connecting…"):
+                try:
+                    _load_service.clear()
+                except Exception:
+                    pass
+                svc, err = _load_service(
+                    st.session_state.provider,
+                    st.session_state.model,
+                    api_key_val,
                 )
-                print("SUCCESS")
-                return db
-
-            except Exception:
-                print("LOAD FAILED")
-                print(traceback.format_exc())
-                return None
-
-        print("INDEX FILES NOT FOUND")
-        return None
-
-    def retrieve(self, query: str, k: int = 3):
-        if not self.vectorstore:
-            return []
-        return self.vectorstore.similarity_search(query, k=k)
-
-    def answer(self, query: str) -> str:
-        if not self.vectorstore:
-            return "No document uploaded."
-
-        if not self.llm:
-            return "LLM not initialized."
-
-        docs = self.retrieve(query)
-
-        context = "\n\n".join([d.page_content for d in docs])
-
-        prompt = f"""
-Answer ONLY from the context below.
-
-Context:
-{context}
-
-Question: {query}
-
-Answer:
-"""
-        return self.llm.invoke(prompt)
-
-    def query_stream(self, question: str, chat_history: List[dict] | None = None, top_k: int = 3, mode: str = "hybrid"):
-        """Retrieve relevant context and stream a grounded answer from the LLM.
-
-        Returns a tuple (stream_generator, sources_list).
-        """
-        if chat_history is None:
-            chat_history = []
-
-        if not self.vectorstore:
-            # No documents indexed
-            def _empty_gen():
-                yield "No documents indexed."
-            return _empty_gen(), []
-
-        docs = self.retrieve(question, k=top_k)
-
-        # Build simple sources list
-        sources = []
-        for i, d in enumerate(docs):
-            src = {}
-            if hasattr(d, "metadata") and isinstance(d.metadata, dict):
-                src["source"] = d.metadata.get("source", f"doc-{i}")
+            if err:
+                st.error(f"Failed: {err}")
             else:
-                # fallback for different doc shape
-                src["source"] = getattr(d, "source", f"doc-{i}") or f"doc-{i}"
-            src["text"] = (getattr(d, "page_content", None) or getattr(d, "content", ""))[:400]
-            src["score"] = float(getattr(d, "similarity_score", 0.0))
-            sources.append(src)
+                st.session_state.rag_service = svc
+                st.session_state.llm_ready   = True
+                st.success("LLM ready — corpus loaded!")
 
-        context = "\n\n".join([getattr(d, "page_content", None) or getattr(d, "content", "") for d in docs])
+    st.divider()
 
-        # Compose a grounding prompt
-        history_text = "\n".join([f"User: {m['content']}" if m.get("role") == "user" else f"Assistant: {m['content']}" for m in chat_history])
+    # ── Corpus info (replaces upload section) ─────────────────────────────
+    st.markdown("### 📚 Knowledge Base")
+    st.markdown("""
+    <div style="font-size:0.82em;color:#64748b;line-height:1.8">
+        Corpus is pre-loaded at startup.<br><br>
+        <strong style="color:#94A3B8">MedQuAD</strong><br>
+        32,814 QA pairs · 16 NLM sources<br><br>
+        <strong style="color:#94A3B8">Embeddings</strong><br>
+        all-MiniLM-L6-v2 · FAISS IndexFlatIP<br><br>
+        <strong style="color:#94A3B8">Topics covered</strong><br>
+        Diseases · Drugs · Treatments<br>
+        Genetics · Clinical trials · FAQs
+    </div>
+    """, unsafe_allow_html=True)
 
-        prompt = f"""
-Answer ONLY from the context below. Be concise and cite sources when possible.
+    st.divider()
 
-Context:
-{context}
+    # ── Retrieval settings ─────────────────────────────────────────────────
+    chevron = "▲" if st.session_state.settings_open else "▼"
+    if st.button(f"⚙️ Retrieval Settings  {chevron}", use_container_width=True, key="settings_btn"):
+        st.session_state.settings_open = not st.session_state.settings_open
+        st.rerun()
 
-Conversation history:
-{history_text}
+    if st.session_state.settings_open:
+        st.session_state.top_k = st.slider(
+            "Top-K chunks", min_value=3, max_value=15, value=st.session_state.top_k,
+            help="Number of chunks retrieved before reranking",
+        )
+        st.session_state.retrieval_mode = st.radio(
+            "Retrieval mode",
+            ["hybrid", "dense", "sparse"],
+            index=["hybrid", "dense", "sparse"].index(st.session_state.retrieval_mode),
+            help="hybrid = FAISS + BM25 + RRF fusion",
+        )
+        st.caption(
+            f"Hybrid = FAISS dense + BM25 sparse + Reciprocal Rank Fusion. "
+            f"Current: **{st.session_state.retrieval_mode}**, top-{st.session_state.top_k}."
+        )
 
-Question: {question}
+    st.divider()
 
-Answer:
-"""
+    # ── Safety disclaimer ──────────────────────────────────────────────────
+    st.markdown("""
+    <div class="disclaimer">
+        ⚠️ <strong>Research Use Only.</strong><br>
+        This system is an MSc research prototype. All responses are AI-generated
+        from biomedical literature and must not be used for clinical diagnosis,
+        treatment decisions, or medical advice. Always consult a qualified
+        healthcare professional.
+    </div>
+    """, unsafe_allow_html=True)
 
-        # Use the underlying LLM streaming API
-        stream_gen = self.llm.stream(prompt)
-        return stream_gen, sources
+    st.divider()
+    if st.button("🔄 Reset Session", use_container_width=True):
+        for k in list(st.session_state.keys()):
+            del st.session_state[k]
+        st.cache_resource.clear()
+        st.rerun()
+
+
+# ── Main layout ───────────────────────────────────────────────────────────────
+svc = st.session_state.rag_service
+
+# Keep state consistent after Streamlit reruns/restarts
+if svc is None:
+    st.session_state.llm_ready = False
+
+llm_ok = st.session_state.llm_ready
+
+# Header
+st.markdown(f"""
+<div class="hdr-band">
+    <div class="hdr-title">
+        <span class="accent-dot">●</span> Biomedical RAG
+        <span style="font-size:0.55em;color:var(--muted);margin-left:12px;">
+            Medical Question Answering System
+        </span>
+    </div>
+    <div class="hdr-sub">
+        Grounded answers from biomedical literature using hybrid retrieval (FAISS + BM25) and Cohere Command-R.
+        Corpus: MedQuAD · 32,814 QA pairs · SentenceTransformers embeddings.
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span class="pill {'pill-green' if llm_ok else 'pill-red'}">
+            {'✓ LLM Ready' if llm_ok else '✗ LLM Not Connected'}
+        </span>
+        <span class="pill pill-green">✓ Corpus Pre-loaded</span>
+        <span class="pill pill-blue">
+            {st.session_state.retrieval_mode.upper()} Retrieval
+        </span>
+        <span class="phase-badge">📋 MSc MVP · Phase 3</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ── Two-column layout ─────────────────────────────────────────────────────────
+chat_col, insight_col = st.columns([2.2, 1])
+
+# ── Chat column ───────────────────────────────────────────────────────────────
+with chat_col:
+    st.markdown("### 💬 Medical Q&A")
+
+    if not st.session_state.display_history:
+        st.markdown("""
+        <div class="empty-state">
+            <div class="empty-icon">🔬</div>
+            <div class="empty-title">READY FOR BIOMEDICAL QUERIES</div>
+            <div class="empty-hint">
+                Connect your LLM in the sidebar, then ask any biomedical question.<br><br>
+                <strong>Example questions:</strong><br>
+                "What are the symptoms of type 2 diabetes?"<br>
+                "How does Parkinson's disease affect dopamine?"<br>
+                "What is the relationship between obesity and hypertension?"<br>
+                "What are the treatment options for acute leukemia?"
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Render history
+    for turn in st.session_state.display_history:
+        if turn["role"] == "user":
+            st.markdown(f'<div class="user-msg">{turn["content"]}</div>', unsafe_allow_html=True)
+        elif turn["role"] == "error":
+            st.markdown(f'<div class="error-msg">⚠ {turn["content"]}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="bot-msg">{turn["content"]}</div>', unsafe_allow_html=True)
+            if turn.get("sources"):
+                with st.expander(
+                    f"📚 {len(turn['sources'])} source(s)  ·  ⚡ {turn.get('latency_ms', 0):.0f}ms",
+                    expanded=False,
+                ):
+                    for i, src in enumerate(turn["sources"], 1):
+                        score = src.get("rerank_score") or src.get("score", 0)
+                        conf  = "High" if score > 0.7 else "Medium" if score > 0.4 else "Low"
+                        c_cls = {"High": "pill-green", "Medium": "pill-amber", "Low": "pill-red"}[conf]
+                        st.markdown(f"""
+                        <div class="src-card">
+                            <strong>#{i}  {src.get('source', 'Unknown')}</strong>
+                            &nbsp;<span class="pill {c_cls}">{conf}</span>
+                            &nbsp;<span style="font-family:var(--mono);font-size:0.85em;color:var(--muted)">
+                                score: {score:.3f}
+                            </span>
+                            <div class="src-excerpt">{src.get('text', '')[:240]}…</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+    # Chat input — only requires LLM, no doc check
+    question = st.chat_input(
+        "Ask a biomedical question…",
+        disabled=not llm_ok,
+    )
+
+    if not llm_ok:
+        st.caption("⬅ Connect your LLM in the sidebar to begin.")
+
+    if question:
+        st.session_state.display_history.append({"role": "user", "content": question})
+        st.session_state.chat_history.append({"role": "user", "content": question})
+
+        placeholder = st.empty()
+        full_answer = ""
+        sources     = []
+        latency_ms  = 0.0
+
+        try:
+            t0 = time.perf_counter()
+            stream, sources = svc.query_stream(
+                question=question,
+                chat_history=st.session_state.chat_history[:-1],
+                top_k=st.session_state.top_k,
+                mode=st.session_state.retrieval_mode,
+            )
+            latency_ms = (time.perf_counter() - t0) * 1000
+
+            for token in stream:
+                full_answer += token
+                placeholder.markdown(
+                    f'<div class="bot-msg">{full_answer}▌</div>',
+                    unsafe_allow_html=True,
+                )
+            placeholder.empty()
+
+            st.session_state.total_queries += 1
+            n = st.session_state.total_queries
+            prev_avg = st.session_state.avg_latency_ms
+            st.session_state.avg_latency_ms = prev_avg + (latency_ms - prev_avg) / n
+
+        except Exception as e:
+            full_answer = str(e)
+            placeholder.empty()
+            st.session_state.display_history.append({"role": "error", "content": full_answer})
+            st.session_state.chat_history.append({"role": "assistant", "content": f"Error: {full_answer}"})
+            st.rerun()
+
+        st.session_state.display_history.append({
+            "role":       "assistant",
+            "content":    full_answer,
+            "sources":    sources,
+            "latency_ms": latency_ms,
+        })
+        st.session_state.chat_history.append({"role": "assistant", "content": full_answer})
+        st.rerun()
+
+
+# ── Insights column ───────────────────────────────────────────────────────────
+with insight_col:
+    st.markdown("### 📊 System Status")
+
+    n_chunks = 0
+    try:
+        if svc:
+            n_chunks = getattr(svc, "total_chunks", 0)
+    except Exception:
+        pass
+
+    st.markdown(f"""
+    <div class="m-grid">
+        <div class="m-card">
+            <div class="m-val">{n_chunks:,}</div>
+            <div class="m-lbl">Chunks</div>
+        </div>
+        <div class="m-card">
+            <div class="m-val">32,814</div>
+            <div class="m-lbl">QA Pairs</div>
+        </div>
+        <div class="m-card">
+            <div class="m-val">{st.session_state.total_queries}</div>
+            <div class="m-lbl">Queries</div>
+        </div>
+        <div class="m-card">
+            <div class="m-val">{st.session_state.avg_latency_ms:.0f}ms</div>
+            <div class="m-lbl">Avg Latency</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.divider()
+    st.markdown("**Pipeline**")
+    st.markdown(f"""
+    <div style="font-size:0.78em;color:var(--muted);line-height:2;font-family:var(--mono)">
+        Embed  · all-MiniLM-L6-v2<br>
+        Index  · FAISS (IndexFlatIP)<br>
+        Sparse · BM25 (rank-bm25)<br>
+        Fuse   · Reciprocal Rank Fusion<br>
+        LLM    · {st.session_state.model.split('/')[-1]}<br>
+        Mode   · {st.session_state.retrieval_mode.upper()}
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.divider()
+
+    st.markdown("**Project Progress**")
+    phases = [
+        ("Phase 1 · Data Pipeline",  95, "pill-green"),
+        ("Phase 2 · RAG System",     85, "pill-green"),
+        ("Phase 3 · Evaluation",     30, "pill-amber"),
+        ("Phase 4 · Safety & Ethics", 5, "pill-red"),
+    ]
+    for label, pct, cls in phases:
+        color = {"pill-green": "#10B981", "pill-amber": "#F59E0B", "pill-red": "#EF4444"}[cls]
+        st.markdown(f"""
+        <div class="prog-wrap">
+            <div class="prog-label"><span>{label}</span><span>{pct}%</span></div>
+            <div class="prog-track">
+                <div class="prog-fill" style="width:{pct}%;background:{color}"></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.divider()
+
+    st.markdown("**Last Query**")
+    last = next(
+        (t for t in reversed(st.session_state.display_history) if t["role"] == "assistant"),
+        None,
+    )
+    if last and last.get("sources"):
+        st.caption(f"⚡ {last.get('latency_ms', 0):.0f}ms retrieval")
+        for i, src in enumerate(last["sources"][:3], 1):
+            score = src.get("rerank_score") or src.get("score", 0)
+            conf  = "🟢" if score > 0.7 else "🟡" if score > 0.4 else "🔴"
+            st.markdown(f"""
+            <div class="src-card">
+                <strong>#{i} {src.get('source', '?')[:28]}</strong>
+                {conf} {score:.3f}<br>
+                <span class="src-excerpt">{src.get('text', '')[:90]}…</span>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.caption("No query results yet.")
+
+    st.divider()
+    st.markdown("**Session**")
+    n_q = len([t for t in st.session_state.display_history if t["role"] == "user"])
+    n_a = len([t for t in st.session_state.display_history if t["role"] == "assistant"])
+    st.markdown(f"""
+    <div style="font-size:0.78em;color:var(--muted);line-height:2;font-family:var(--mono)">
+        Questions  · {n_q}<br>
+        Answers    · {n_a}<br>
+        Errors     · {len([t for t in st.session_state.display_history if t['role']=='error'])}
+    </div>
+    """, unsafe_allow_html=True)
+
+    if st.button("🗑 Clear Chat", use_container_width=True):
+        st.session_state.display_history = []
+        st.session_state.chat_history    = []
+        st.session_state.total_queries   = 0
+        st.session_state.avg_latency_ms  = 0.0
+        st.rerun()
