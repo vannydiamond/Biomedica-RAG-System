@@ -18,11 +18,24 @@ COHERE_KEY = os.getenv("COHERE_API_KEY")
 # -------------------------
 # EMBEDDINGS & VECTOR STORE
 # -------------------------
+from pathlib import Path
+
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-INDEX_PATH = "vectorstore_index"
+# Absolute path to repository root
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+INDEX_PATH = str(BASE_DIR / "vectorstore_index")
+
+print("=" * 60)
+print("BASE_DIR:", BASE_DIR)
+print("INDEX_PATH:", INDEX_PATH)
+print("VECTORSTORE EXISTS:", os.path.exists(INDEX_PATH))
+print("FAISS EXISTS:", os.path.exists(os.path.join(INDEX_PATH, "index.faiss")))
+print("PKL EXISTS:", os.path.exists(os.path.join(INDEX_PATH, "index.pkl")))
+print("=" * 60)
 
 
 def get_embeddings():
