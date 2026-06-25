@@ -192,11 +192,19 @@ def get_llm(provider: str, api_key: str, model: str, temperature: float = 0.7, m
 # -------------------------
 # QA SYSTEM (RAG CORE)
 # -------------------------
-class QASystem:
+ class QASystem:
     def __init__(self):
+        self.total_chunks = 0
         self.vectorstore = self._load_index()
-        self.llm: BaseLLM | None = None
 
+        if self.vectorstore:
+            try:
+                self.total_chunks = self.vectorstore.index.ntotal
+            except Exception:
+                self.total_chunks = 0
+
+        self.llm: BaseLLM | None = None
+        
     def set_llm(self, provider: str, api_key: str, model: str, temperature: float = 0.7, max_tokens: int = 512):
         self.llm = get_llm(
             provider=provider,
